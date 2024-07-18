@@ -1,47 +1,85 @@
-import transaction from '../models/transaction.js';
-import user from '../models/user.js';
+import transaction from "../models/transaction.js";
+import user from "../models/user.js";
 import history from "../models/history.js";
-import errorHandler from '../config/errorHandler.js';
+import errorHandler from "../config/errorHandler.js";
 import db from "../config/db.js";
+import multer from "multer";
+import path from "path";
 
 const resetAutoIncrement = async () => {
-  await db.query('ALTER TABLE transaction AUTO_INCREMENT = 1', { raw: true });
+  await db.query("ALTER TABLE transaction AUTO_INCREMENT = 1", { raw: true });
 };
 
+const upload = multer({
+  storage: multer.diskStorage({
+    destination: (req, file, cb) => cb(null, "./uploads/"),
+    filename: (req, file, cb) =>
+      cb(
+        null,
+        `${file.fieldname}-${Date.now()}${path.extname(file.originalname)}`
+      ),
+  }),
+  fileFilter: (req, file, cb) => {
+    const allowedTypes = /jpeg|jpg|png/;
+    const isMimeType = allowedTypes.test(file.mimetype);
+    const isExtName = allowedTypes.test(
+      path.extname(file.originalname).toLowerCase()
+    );
+    if (isMimeType && isExtName) cb(null, true);
+    else cb(new Error("Only images are allowed!"));
+  },
+  limits: { fileSize: 5 * 1024 * 1024 },
+}).single("attachment");
+
 export const createTransaction = async (req, res) => {
-  const t = await db.transaction();
+  upload(req, res, async (err) => {
+    if (err instanceof multer.MulterError) {
+      return errorHandler(res, err, "Failed to upload file");
+    } else if (err) {
+      return errorHandler(res, err, "An unexpected error occurred");
+    }
 
-  try {
-    const { name, description, amount, attachment, value, userId } = req.body;
+    const t = await db.transaction();
 
-    const newTransaction = await transaction.create({
-      name,
-      description,
-      amount,
-      attachment,
-      value,
-      status: "active",
-      userId
-    }, { transaction: t });
+    try {
+      const { name, description, amount, value, userId } = req.body;
+      const attachment = req.file ? req.file.path.replace(/\\/g, "/") : null;
 
-    const transactionUser = await user.findByPk(userId);
+      const newTransaction = await transaction.create(
+        {
+          name,
+          description,
+          amount,
+          attachment,
+          value,
+          status: "active",
+          userId,
+        },
+        { transaction: t }
+      );
 
-    const newHistory = await history.create({
-      name: `${transactionUser.username} telah membuat transaksi baru dengan judul ${newTransaction.name}`,
-      transactionId: newTransaction.id
-    }, { transaction: t });
+      const transactionUser = await user.findByPk(userId);
 
-    await t.commit();
+      const newHistory = await history.create(
+        {
+          name: `${transactionUser.username} telah membuat transaksi baru dengan judul ${newTransaction.name}`,
+          transactionId: newTransaction.id,
+        },
+        { transaction: t }
+      );
 
-    res.status(201).json({
-      message: "Transaction created successfully",
-      transaction: newTransaction,
-      history: newHistory
-    });
-  } catch (error) {
-    await t.rollback();
-    errorHandler(res, error, "Failed to create Transaction");
-  }
+      await t.commit();
+
+      res.status(201).json({
+        message: "Transaction created successfully",
+        transaction: newTransaction,
+        history: newHistory,
+      });
+    } catch (error) {
+      await t.rollback();
+      errorHandler(res, error, "Failed to create Transaction");
+    }
+  });
 };
 
 export const getTransaction = async (req, res) => {
@@ -50,10 +88,10 @@ export const getTransaction = async (req, res) => {
       include: [
         {
           model: user,
-          as: 'user',
-          attributes: ['username', 'role']
-        }
-      ]
+          as: "user",
+          attributes: ["username", "role"],
+        },
+      ],
     });
     res.status(200).json(transactions);
   } catch (error) {
@@ -69,10 +107,10 @@ export const getTransactionById = async (req, res) => {
       include: [
         {
           model: user,
-          as: 'user',
-          attributes: ['username', 'role']
-        }
-      ]
+          as: "user",
+          attributes: ["username", "role"],
+        },
+      ],
     });
 
     if (!transactionDetails) {
@@ -86,43 +124,61 @@ export const getTransactionById = async (req, res) => {
 };
 
 export const updateTransaction = async (req, res) => {
-  const t = await db.transaction();
-
-  try {
-    const { name, description, amount, attachment, value } = req.body;
-    const { id } = req.params;
-
-    const existingTransaction = await transaction.findByPk(id);
-    if (!existingTransaction) {
-      return res.status(404).json({ message: "Transaction not found" });
+  upload(req, res, async (err) => {
+    if (err instanceof multer.MulterError) {
+      return errorHandler(res, err, "Failed to upload file");
+    } else if (err) {
+      return errorHandler(res, err, "An unexpected error occurred");
     }
 
-    const transactionUser = await user.findByPk(existingTransaction.userId);
+    const t = await db.transaction();
 
-    const updatedTransaction = await existingTransaction.update({
-      name: name || existingTransaction.name,
-      description: description || existingTransaction.description,
-      amount: amount || existingTransaction.amount,
-      attachment: attachment || existingTransaction.attachment,
-      value: value || existingTransaction.value
-    }, { transaction: t });
+    try {
+      const { name, description, amount, value } = req.body;
+      const { id } = req.params;
 
-    const newHistory = await history.create({
-      name: `${transactionUser.username} telah mengubah transaksi dengan judul ${updatedTransaction.name}`,
-      transactionId: updatedTransaction.id
-    }, { transaction: t });
+      const existingTransaction = await transaction.findByPk(id);
+      if (!existingTransaction) {
+        return res.status(404).json({ message: "Transaction not found" });
+      }
 
-    await t.commit();
+      const transactionUser = await user.findByPk(existingTransaction.userId);
 
-    res.status(200).json({
-      message: "Transaction updated successfully",
-      transaction: updatedTransaction,
-      history: newHistory
-    });
-  } catch (error) {
-    await t.rollback();
-    errorHandler(res, error, "Failed to update Transaction");
-  }
+      const attachment = req.file
+        ? req.file.path.replace(/\\/g, "/")
+        : existingTransaction.attachment;
+
+      const updatedTransaction = await existingTransaction.update(
+        {
+          name: name || existingTransaction.name,
+          description: description || existingTransaction.description,
+          amount: amount || existingTransaction.amount,
+          attachment: attachment,
+          value: value || existingTransaction.value,
+        },
+        { transaction: t }
+      );
+
+      const newHistory = await history.create(
+        {
+          name: `${transactionUser.username} telah mengubah transaksi dengan judul ${updatedTransaction.name}`,
+          transactionId: updatedTransaction.id,
+        },
+        { transaction: t }
+      );
+
+      await t.commit();
+
+      res.status(200).json({
+        message: "Transaction updated successfully",
+        transaction: updatedTransaction,
+        history: newHistory,
+      });
+    } catch (error) {
+      await t.rollback();
+      errorHandler(res, error, "Failed to update Transaction");
+    }
+  });
 };
 
 export const updateStatus = async (req, res) => {
@@ -138,20 +194,24 @@ export const updateStatus = async (req, res) => {
 
     const transactionUser = await user.findByPk(existingTransaction.userId);
 
-    const newStatus = existingTransaction.status === 'active' ? 'inactive' : 'active';
+    const newStatus =
+      existingTransaction.status === "active" ? "inactive" : "active";
 
     await existingTransaction.update({ status: newStatus }, { transaction: t });
 
-    const newHistory = await history.create({
-      name: `${transactionUser.username} telah mengubah status transaksi dengan judul ${existingTransaction.name} menjadi ${newStatus}`,
-      transactionId: existingTransaction.id
-    }, { transaction: t });
+    const newHistory = await history.create(
+      {
+        name: `${transactionUser.username} telah mengubah status transaksi dengan judul ${existingTransaction.name} menjadi ${newStatus}`,
+        transactionId: existingTransaction.id,
+      },
+      { transaction: t }
+    );
 
     await t.commit();
 
     res.status(200).json({
       message: "Transaction status updated successfully",
-      history: newHistory
+      history: newHistory,
     });
   } catch (error) {
     await t.rollback();
