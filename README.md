@@ -45,6 +45,17 @@ nodemon index
 "updatedAt": "date/generated"
 ```
 
+- **CoA Model**
+```
+"name": "text/string",
+"transactionId": "text/int",
+```
+```
+"id": "text/int/generated|auto_increment"
+"createdAt": "date/generated"
+"updatedAt": "date/generated"
+```
+
 ## User API
 - **Login (POST)**
 ```
@@ -109,6 +120,16 @@ http://localhost:5000/api/coa/:id
 - **Delete CoA (DELETE, Require Params [id])**
 ```
 http://localhost:5000/api/coa/:id
+```
+
+## History API
+- **Get History (GET)**
+```
+http://localhost:5000/api/history
+```
+- **Get History By ID (GET, Require Params [id])**
+```
+http://localhost:5000/api/history/:id
 ```
 
 ## Uploads Directory
