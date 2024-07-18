@@ -1,6 +1,7 @@
 import express from "express";
 import cors from "cors";
 import routes from "./routes/index.js";
+import sync from "./config/sync.js";
 import cookieParser from 'cookie-parser';
 import { fileURLToPath } from "url";
 import path, { dirname } from "path";
@@ -15,8 +16,17 @@ app.use(express.json());
 app.use(cookieParser());
 
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
-
 app.use("/api", routes);
 
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Server is running on port ${PORT}`));
+const startServer = async () => {
+  try {
+    await sync();
+    const PORT = process.env.PORT || 5000;
+    app.listen(PORT, () => console.log(`Server is running on port ${PORT}`));
+  } catch (error) {
+    console.error("Error starting the server:", error);
+    process.exit(1);
+  }
+};
+
+startServer();

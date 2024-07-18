@@ -1,36 +1,47 @@
 import { Sequelize } from "sequelize";
 import db from "../config/db.js";
+import user from "./user.js";
 
 const { DataTypes } = Sequelize;
 
-const user = db.define(
-  "user",
+const transaction = db.define(
+  "transaction",
   {
-    username: {
-      type: DataTypes.STRING,
-      allowNull: false,
-      unique: true,
-      validate: {
-        notEmpty: true,
-      },
-    },
-    password: {
+    name: {
       type: DataTypes.STRING,
       allowNull: false,
       validate: {
         notEmpty: true,
-      },
+      }
     },
-    role: {
+    description: {
+      type: DataTypes.STRING,
+      allowNull: true
+    },
+    amount: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      validate: {
+        notEmpty: true,
+      }
+    },
+    attachment: {
+      type: DataTypes.STRING,
+      allowNull: true
+    },
+    value: {
       type: DataTypes.STRING,
       allowNull: false,
       validate: {
         notEmpty: true,
-      },
+      }
     },
-    status: {
-      type: DataTypes.STRING,
+    userId: {
+      type: DataTypes.INTEGER,
       allowNull: false,
+      validate: {
+        notEmpty: true,
+      }
     },
   },
   {
@@ -39,4 +50,6 @@ const user = db.define(
   }
 );
 
-export default user;
+transaction.belongsTo(user, { foreignKey: 'userId', as: 'user' });
+
+export default transaction;

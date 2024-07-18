@@ -29,7 +29,3 @@ const coa = db.define(
 );
 
 export default coa;
-
-(async () => {
-  await db.sync();
-})();
