@@ -17,6 +17,17 @@ nodemon index
 "updatedAt": "date/generated"
 ```
 
+- **CoA Model**
+```
+"code": "text/string",
+"name": "text/string",
+```
+```
+"id": "text/int/generated|auto_increment"
+"createdAt": "date/generated"
+"updatedAt": "date/generated"
+```
+
 ## User API
 - **Login (POST)**
 ```
@@ -39,8 +50,30 @@ http://localhost:5000/api/user
 http://localhost:5000/api/user/update/:id
 ```
 
-## Uploads Directory
-- **Images**
+## CoA API
+- **Get CoA (GET)**
 ```
-http://localhost:5000/uploads/images/:filename
+http://localhost:5000/api/coa
+```
+- **Get CoA By ID (GET, Require Params [id])**
+```
+http://localhost:5000/api/coa/:id
+```
+- **Create CoA (POST)**
+```
+http://localhost:5000/api/coa
+```
+- **Update CoA (PATCH, Require Params [id])**
+```
+http://localhost:5000/api/coa/:id
+```
+- **Delete CoA (DELETE, Require Params [id])**
+```
+http://localhost:5000/api/coa/:id
+```
+
+## Uploads Directory
+- **Attachment**
+```
+http://localhost:5000/uploads/:filename
 ```
