@@ -77,7 +77,6 @@ export const deleteCoa = async (req, res) => {
     }
 
     await coaRecord.destroy();
-    await resetAutoIncrement();
     res.status(200).json({ message: "CoA deleted successfully" });
   } catch (error) {
     errorHandler(res, error, "Failed to delete CoA");

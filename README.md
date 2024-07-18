@@ -17,6 +17,23 @@ nodemon index
 "updatedAt": "date/generated"
 ```
 
+- **Transaction Model**
+```
+"name": "text/string",
+"amount": "text/int",
+"description": "text/string",
+"date": "text/string",
+"value": "text/string|plus|minus",
+"status": "text/string|active|inactive",
+"attachment": "file/jpg|png|jpeg"
+"userId": "text/int"
+```
+```
+"id": "text/int/generated|auto_increment"
+"createdAt": "date/generated"
+"updatedAt": "date/generated"
+```
+
 - **CoA Model**
 ```
 "code": "text/string",
@@ -48,6 +65,28 @@ http://localhost:5000/api/user
 - **Update User Status (PATCH, Require Params [id])**
 ```
 http://localhost:5000/api/user/update/:id
+```
+
+## Transaction API
+- **Get Transaction (GET)**
+```
+http://localhost:5000/api/transaction
+```
+- **Get Transaction By ID (GET, Require Params [id])**
+```
+http://localhost:5000/api/transaction/:id
+```
+- **Create Transaction (POST)**
+```
+http://localhost:5000/api/transaction
+```
+- **Update Transaction (PATCH, Require Params [id])**
+```
+http://localhost:5000/api/transaction/:id
+```
+- **Update Transaction Status (PATCH, Require Params [id])**
+```
+http://localhost:5000/api/transaction/status/:id
 ```
 
 ## CoA API

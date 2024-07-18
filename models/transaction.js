@@ -36,6 +36,13 @@ const transaction = db.define(
         notEmpty: true,
       }
     },
+    status: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      validate: {
+        notEmpty: true,
+      }
+    },
     userId: {
       type: DataTypes.INTEGER,
       allowNull: false,
