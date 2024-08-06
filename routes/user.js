@@ -5,7 +5,8 @@ import {
   login,
   logout,
   getToken,
-  updateStatus
+  updateStatus,
+  getUser
 } from '../controllers/user.js';
 
 const router = express.Router();
@@ -14,6 +15,7 @@ router.post('/register', register);
 router.post('/login', login);
 router.post('/logout', auth, logout);
 router.get('/', getToken);
+router.get('/fetch', getUser);
 router.patch('/update/:id', auth, updateStatus);
 
 export default router;

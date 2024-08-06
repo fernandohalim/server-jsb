@@ -39,7 +39,7 @@ export const login = async (req, res) => {
       return;
     }
 
-    const token = jwt.sign({ id: user.id, username: user.username }, 'your_secret_key', { expiresIn: '1h' });
+    const token = jwt.sign({ id: validate.id, username: validate.username }, 'your_secret_key', { expiresIn: '1h' });
 
     res.cookie('token', token, { httpOnly: true, maxAge: 3600000 });
 
@@ -68,10 +68,32 @@ export const getToken = async (req, res) => {
     }
 
     const decoded = jwt.verify(token, 'your_secret_key');
+    console.log(decoded)
 
-    res.status(200).json({ token, decoded });
+    const currentUser = await user.findOne({ where: { id: decoded.id } });
+
+    if (!currentUser) {
+      res.status(404).json({ message: "User not found" });
+      return;
+    }
+
+    res.status(200).json({ token, user: currentUser });
   } catch (error) {
     errorHandler(res, error, "Failed to get token");
+  }
+};
+
+export const getUser = async (req, res) => {
+  try {
+    const users = await user.findAll({
+      where: {
+        status: 'active'
+      },
+      order: [['updatedAt', 'DESC']],
+    });
+    res.status(200).json(users);
+  } catch (error) {
+    errorHandler(res, error, "Failed to retrieve users list");
   }
 };
 

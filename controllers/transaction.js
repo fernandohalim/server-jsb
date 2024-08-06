@@ -1,6 +1,7 @@
 import transaction from "../models/transaction.js";
 import user from "../models/user.js";
 import history from "../models/history.js";
+import journal from "../models/journal.js";
 import errorHandler from "../config/errorHandler.js";
 import db from "../config/db.js";
 import multer from "multer";
@@ -43,6 +44,8 @@ export const createTransaction = async (req, res) => {
 
     try {
       const { name, description, amount, value, userId } = req.body;
+      const { coaId1, coaId2 } = req.body;
+      const { value1, value2 } = req.body;
       const attachment = req.file ? req.file.path.replace(/\\/g, "/") : null;
 
       const newTransaction = await transaction.create(
@@ -68,12 +71,34 @@ export const createTransaction = async (req, res) => {
         { transaction: t }
       );
 
+      const newJournal1 = await journal.create(
+        {
+          amount: amount,
+          value: value1,
+          coaId: coaId1,
+          transactionId: newTransaction.id,
+        },
+        { transaction: t }
+      );
+
+      const newJournal2 = await journal.create(
+        {
+          amount: amount,
+          value: value2,
+          coaId: coaId2,
+          transactionId: newTransaction.id,
+        },
+        { transaction: t }
+      );
+
       await t.commit();
 
       res.status(201).json({
         message: "Transaction created successfully",
         transaction: newTransaction,
         history: newHistory,
+        journal_debit: newJournal1,
+        journal_credit: newJournal2,
       });
     } catch (error) {
       await t.rollback();
@@ -85,6 +110,9 @@ export const createTransaction = async (req, res) => {
 export const getTransaction = async (req, res) => {
   try {
     const transactions = await transaction.findAll({
+      where: {
+        status: 'active'
+      },
       include: [
         {
           model: user,
@@ -92,6 +120,7 @@ export const getTransaction = async (req, res) => {
           attributes: ["username", "role"],
         },
       ],
+      order: [['updatedAt', 'DESC']],
     });
     res.status(200).json(transactions);
   } catch (error) {
@@ -196,6 +225,10 @@ export const updateStatus = async (req, res) => {
 
     const newStatus =
       existingTransaction.status === "active" ? "inactive" : "active";
+
+    if (newStatus === "inactive") {
+      await journal.destroy({ where: { transactionId: existingTransaction.id }, transaction: t });
+    }
 
     await existingTransaction.update({ status: newStatus }, { transaction: t });
 

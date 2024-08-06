@@ -14,9 +14,10 @@ export const getHistory = async (req, res) => {
         {
           model: transaction,
           as: 'transaction',
-          attributes: ['name', 'value', 'amount', 'description', 'status']
+          attributes: ['name', 'value', 'amount', 'description', 'status', 'attachment']
         }
-      ]
+      ],
+      order: [['updatedAt', 'DESC']],
     });
     res.status(200).json(histories);
   } catch (error) {

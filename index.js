@@ -10,8 +10,13 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 const app = express();
+const corsOptions ={
+  origin:'http://localhost:3000', 
+  credentials:true,
+  optionSuccessStatus:200
+}
 
-app.use(cors());
+app.use(cors(corsOptions));
 app.use(express.json());
 app.use(cookieParser());
 
